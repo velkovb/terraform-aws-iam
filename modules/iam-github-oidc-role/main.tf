@@ -7,6 +7,7 @@ locals {
 
   account_id = data.aws_caller_identity.current.account_id
   partition  = data.aws_partition.current.partition
+  name_condition = var.name != null ? var.name : "${var.name_prefix}*"
 }
 
 ################################################################################
@@ -15,7 +16,29 @@ locals {
 
 data "aws_iam_policy_document" "this" {
   count = var.create ? 1 : 0
+  
+  dynamic "statement" {
+    # https://aws.amazon.com/blogs/security/announcing-an-update-to-iam-role-trust-policy-behavior/
+    for_each = var.allow_self_assume_role ? [1] : []
 
+    content {
+      sid     = "ExplicitSelfRoleAssumption"
+      effect  = "Allow"
+      actions = ["sts:AssumeRole"]
+
+      principals {
+        type        = "AWS"
+        identifiers = ["*"]
+      }
+
+      condition {
+        test     = "ArnLike"
+        variable = "aws:PrincipalArn"
+        values   = ["arn:${local.partition}:iam::${local.account_id}:role${var.path}${local.name_condition}"]
+      }
+    }
+  }
+  
   statement {
     sid    = "GithubOidcAuth"
     effect = "Allow"
