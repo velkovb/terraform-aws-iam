@@ -79,3 +79,9 @@ variable "provider_url" {
   type        = string
   default     = "token.actions.githubusercontent.com"
 }
+
+variable "allow_self_assume_role" {
+  description = "Determines whether to allow the role to be [assume itself](https://aws.amazon.com/blogs/security/announcing-an-update-to-iam-role-trust-policy-behavior/)"
+  type        = bool
+  default     = false
+}
